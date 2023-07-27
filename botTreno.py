@@ -15,6 +15,7 @@ train_arrived = {}
 def start(update, context):
     pytz.timezone('Europe/Rome')
     user_id = update.effective_user.id
+    train_arrived[str(user_id)] = {999999}
     if user_id in user_preferences:
         update.message.reply_text("Hai già avviato il bot. Puoi utilizzare /stop per fermarlo.")
         return ConversationHandler.END
@@ -61,14 +62,14 @@ def send_message(context):
                 treni = json.loads(r.content)
                 for treno in treni:
                     if treno['inStazione'] == False and treno['circolante'] == True:
-                        data_arrivo_comp = treno['compOrarioArrivo']
-                        ora_arrivo = datetime.strptime(data_arrivo_comp, '%H:%M')
                         ora_arrivo = current_date.strftime("%Y-%m-%d") + ' '+ treno['compOrarioArrivo']
+                        #ora_arrivo = current_date.strftime("%Y-%m-%d") + ' 12:56:00' im using this to testing purpose
                         ora_arrivo = datetime.strptime(ora_arrivo, '%Y-%m-%d %H:%M')
                         if ora_arrivo >= current_date:
                             if under_30_secs(ora_arrivo,current_date):
-                                if treno['numeroTreno'] not in train_arrived[user_id]:
-                                    train_arrived[user_id] = treno['numeroTreno']
+                                print(train_arrived)
+                                if treno['numeroTreno'] not in train_arrived[str(user_id)]:
+                                    train_arrived[str(user_id)].add(treno['numeroTreno'])
                                     context.bot.send_message(user_id, f"Sta arrivando il treno {treno['compNumeroTreno']} delle {treno['compOrarioArrivo']} da {treno['origine']} ")
         else:
             job.schedule_removal()
@@ -92,7 +93,7 @@ def elimina_ultime_tre_cifre(numero):
 
 
 def main():
-    token = "INSERT_TOKEN_HERE"
+    token = ""
     updater = Updater(token, use_context=True)
     dispatcher = updater.dispatcher
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
